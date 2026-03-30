@@ -1,0 +1,123 @@
+x-environment: &airflow_environment
+  - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+  - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+  - AIRFLOW__CORE__LOAD_DEFAULT_CONNECTIONS=False
+  - AIRFLOW__CORE__LOAD_EXAMPLES=False
+  - AIRFLOW__CORE__STORE_DAG_CODE=True
+  - AIRFLOW__CORE__STORE_SERIALIZED_DAGS=True
+  # Идентификатор пользователя Airflow (соответствует нашим правам chown -R 50000)
+  - AIRFLOW_UID=50000
+  # Подключение к PostgreSQL (DWH) wiki_results
+  - AIRFLOW_CONN_MY_POSTGRES=postgresql+psycopg2://airflow:airflow@wiki_results:5432/airflow
+  # Webserver config
+  - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
+  - AIRFLOW__WEBSERVER__RBAC=False
+  - AIRFLOW__WEBSERVER__SECRET_KEY=supersecretkey123
+  # Logging
+  - AIRFLOW__LOGGING__LOGGING_LEVEL=INFO
+  - AIRFLOW__LOGGING__REMOTE_LOGGING=False
+  - AIRFLOW__LOGGING__BASE_LOG_FOLDER=/opt/airflow/logs
+  - AIRFLOW__CORE__DEFAULT_TIMEZONE=utc
+
+x-airflow-image: &airflow_image custom-airflow:slim-2.8.1-python3.11
+
+services:
+  # БД для метаданных Airflow
+  postgres:
+    image: postgres:12-alpine
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Инициализация БД Airflow
+  init:
+    image: *airflow_image
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment: *airflow_environment
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./data:/opt/airflow/data
+      - ./logs:/opt/airflow/logs
+    entrypoint: >
+      bash -c "
+      airflow db upgrade &&
+      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.org &&
+      echo 'Airflow init completed.'"
+    healthcheck:
+      # ИСПРАВЛЕНО: добавлен пробел после test:
+      test: ["CMD", "airflow", "db", "check"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+
+  # Целевая БД (Data Warehouse) для бизнес-данных
+  wiki_results:
+    image: postgres:12-alpine
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./scripts/create_table.sql:/docker-entrypoint-initdb.d/create_table.sql
+
+  webserver:
+    image: *airflow_image
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    ports:
+      - "8080:8080"
+    restart: always
+    environment: *airflow_environment
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./data:/opt/airflow/data
+      - ./logs:/opt/airflow/logs
+    command: webserver
+
+  scheduler:
+    image: *airflow_image
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    restart: always
+    environment: *airflow_environment
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./data:/opt/airflow/data
+      - ./logs:/opt/airflow/logs
+    command: scheduler
+
+  # BI Инструмент - Streamlit
+  streamlit:
+    image: *airflow_image
+    depends_on:
+      wiki_results:
+        condition: service_started
+    ports:
+      - "8501:8501"
+    restart: always
+    environment:
+      - DB_URL=postgresql+psycopg2://airflow:airflow@wiki_results:5432/airflow
+    volumes:
+      - ./streamlit:/opt/streamlit
+      - ./data:/opt/airflow/data
+    command: >
+      bash -c "streamlit run /opt/streamlit/app.py --server.port=8501 --server.address=0.0.0.0"
+
+volumes:
+  postgres_data:

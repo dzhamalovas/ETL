@@ -1,0 +1,25 @@
+[2026-03-30T17:00:48.188+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: stocksense_wiki_etl_v2.write_to_postgres scheduled__2026-03-30T16:00:00+00:00 [queued]>
+[2026-03-30T17:00:48.230+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: stocksense_wiki_etl_v2.write_to_postgres scheduled__2026-03-30T16:00:00+00:00 [queued]>
+[2026-03-30T17:00:48.232+0000] {taskinstance.py:2170} INFO - Starting attempt 1 of 1
+[2026-03-30T17:00:48.278+0000] {taskinstance.py:2191} INFO - Executing <Task(PostgresOperator): write_to_postgres> on 2026-03-30 16:00:00+00:00
+[2026-03-30T17:00:48.324+0000] {standard_task_runner.py:60} INFO - Started process 494 to run task
+[2026-03-30T17:00:48.335+0000] {standard_task_runner.py:87} INFO - Running: ['***', 'tasks', 'run', 'stocksense_wiki_etl_v2', 'write_to_postgres', 'scheduled__2026-03-30T16:00:00+00:00', '--job-id', '15', '--raw', '--subdir', 'DAGS_FOLDER/wiki_pageviews_v2.py', '--cfg-path', '/tmp/tmpexmn0yrk']
+[2026-03-30T17:00:48.350+0000] {standard_task_runner.py:88} INFO - Job 15: Subtask write_to_postgres
+[2026-03-30T17:00:48.498+0000] {task_command.py:423} INFO - Running <TaskInstance: stocksense_wiki_etl_v2.write_to_postgres scheduled__2026-03-30T16:00:00+00:00 [running]> on host b758c9ba2565
+[2026-03-30T17:00:49.026+0000] {taskinstance.py:2480} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='stocksense_wiki_etl_v2' AIRFLOW_CTX_TASK_ID='write_to_postgres' AIRFLOW_CTX_EXECUTION_DATE='2026-03-30T16:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-03-30T16:00:00+00:00'
+[2026-03-30T17:00:49.032+0000] {postgres.py:68} INFO - Executing: INSERT INTO pageview_counts VALUES ('Facebook', 712, '2026-03-30 16:00:00+00:00');
+INSERT INTO pageview_counts VALUES ('Microsoft', 155, '2026-03-30 16:00:00+00:00');
+INSERT INTO pageview_counts VALUES ('Apple', 69, '2026-03-30 16:00:00+00:00');
+INSERT INTO pageview_counts VALUES ('Google', 715, '2026-03-30 16:00:00+00:00');
+INSERT INTO pageview_counts VALUES ('Amazon', 23, '2026-03-30 16:00:00+00:00');
+[2026-03-30T17:00:49.039+0000] {crypto.py:82} WARNING - empty cryptography key - values will not be stored encrypted.
+[2026-03-30T17:00:49.046+0000] {base.py:83} INFO - Using connection ID 'my_postgres' for task execution.
+[2026-03-30T17:00:49.080+0000] {sql.py:450} INFO - Running statement: INSERT INTO pageview_counts VALUES ('Facebook', 712, '2026-03-30 16:00:00+00:00');
+INSERT INTO pageview_counts VALUES ('Microsoft', 155, '2026-03-30 16:00:00+00:00');
+INSERT INTO pageview_counts VALUES ('Apple', 69, '2026-03-30 16:00:00+00:00');
+INSERT INTO pageview_counts VALUES ('Google', 715, '2026-03-30 16:00:00+00:00');
+INSERT INTO pageview_counts VALUES ('Amazon', 23, '2026-03-30 16:00:00+00:00');, parameters: None
+[2026-03-30T17:00:49.082+0000] {sql.py:459} INFO - Rows affected: 1
+[2026-03-30T17:00:49.138+0000] {taskinstance.py:1138} INFO - Marking task as SUCCESS. dag_id=stocksense_wiki_etl_v2, task_id=write_to_postgres, execution_date=20260330T160000, start_date=20260330T170048, end_date=20260330T170049
+[2026-03-30T17:00:49.266+0000] {local_task_job_runner.py:234} INFO - Task exited with return code 0
+[2026-03-30T17:00:49.354+0000] {taskinstance.py:3280} INFO - 1 downstream tasks scheduled from follow-on schedule check
